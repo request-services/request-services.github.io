@@ -1,5 +1,28 @@
 // Admin Panel JavaScript
 
+// -----------------------------
+// EmailJS (admin) configuration
+// -----------------------------
+const ADMIN_EMAILJS_CONFIG = {
+    serviceId: 'service_64bmwtd',          // <-- your EmailJS service ID
+    statusTemplateId: 'template_imwy85m', // <-- create this template in EmailJS
+    publicKey: 'HdQVpdT33jKEojhyW'         // <-- your EmailJS public key
+};
+
+// Init EmailJS for admin
+(function () {
+    try {
+        if (typeof emailjs !== 'undefined') {
+            emailjs.init({ publicKey: ADMIN_EMAILJS_CONFIG.publicKey });
+            console.log('EmailJS (admin) initialized');
+        } else {
+            console.warn('EmailJS not found on page. Status emails will be skipped.');
+        }
+    } catch (e) {
+        console.error('Failed to init EmailJS (admin):', e);
+    }
+})();
+
 let currentUser = null;
 let allRequests = [];
 let filteredRequests = [];
@@ -124,9 +147,11 @@ async function loadRequests() {
             .get();
 
         allRequests = snapshot.docs.map(doc => ({
-            id: doc.id,
+            id: doc.id,                                    // Firestore doc ID
             ...doc.data(),
-            timestamp: doc.data().timestamp?.toDate() || new Date()
+            timestamp: doc.data().timestamp?.toDate
+                ? doc.data().timestamp.toDate()
+                : (doc.data().timestamp || new Date())     // be forgiving if timestamp is missing
         }));
 
         updateStatistics();
@@ -168,10 +193,10 @@ function applyFilters() {
     const searchQuery = searchInput.value.toLowerCase().trim();
     if (searchQuery) {
         filtered = filtered.filter(req =>
-            req.name.toLowerCase().includes(searchQuery) ||
-            req.email.toLowerCase().includes(searchQuery) ||
-            req.description.toLowerCase().includes(searchQuery) ||
-            req.projectType.toLowerCase().includes(searchQuery)
+            (req.name || '').toLowerCase().includes(searchQuery) ||
+            (req.email || '').toLowerCase().includes(searchQuery) ||
+            (req.description || '').toLowerCase().includes(searchQuery) ||
+            (req.projectType || '').toLowerCase().includes(searchQuery)
         );
     }
 
@@ -204,8 +229,8 @@ function updateTable() {
     requestsTableBody.innerHTML = pageRequests.map(request => `
         <tr onclick="viewRequest('${request.id}')" data-request-id="${request.id}">
             <td>${formatDate(request.timestamp)}</td>
-            <td>${escapeHtml(request.name)}</td>
-            <td>${escapeHtml(request.email)}</td>
+            <td>${escapeHtml(request.name || '')}</td>
+            <td>${escapeHtml(request.email || request.reply_to || '')}</td>
             <td><span class="language-tag ${request.language}">${formatLanguage(request.language)}</span></td>
             <td>${formatProjectType(request.projectType)}</td>
             <td>${request.budget ? formatBudget(request.budget) : '<span style="color: var(--text-muted);">Not specified</span>'}</td>
@@ -225,8 +250,8 @@ function updateTable() {
 }
 
 function updatePagination() {
-    const totalPages = Math.ceil(filteredRequests.length / requestsPerPage);
-    const startIndex = (currentPage - 1) * requestsPerPage + 1;
+    const totalPages = Math.ceil(filteredRequests.length / requestsPerPage) || 1;
+    const startIndex = filteredRequests.length ? (currentPage - 1) * requestsPerPage + 1 : 0;
     const endIndex = Math.min(currentPage * requestsPerPage, filteredRequests.length);
 
     paginationInfo.textContent = `Showing ${startIndex}-${endIndex} of ${filteredRequests.length} requests`;
@@ -272,7 +297,7 @@ function viewRequest(requestId) {
                 <i class="fas fa-user"></i>
                 Name
             </div>
-            <div class="detail-value">${escapeHtml(request.name)}</div>
+            <div class="detail-value">${escapeHtml(request.name || '')}</div>
         </div>
 
         <div class="request-detail">
@@ -281,8 +306,8 @@ function viewRequest(requestId) {
                 Email
             </div>
             <div class="detail-value">
-                <a href="mailto:${escapeHtml(request.email)}" style="color: var(--accent-primary);">
-                    ${escapeHtml(request.email)}
+                <a href="mailto:${escapeHtml(request.email || request.reply_to || '')}" style="color: var(--accent-primary);">
+                    ${escapeHtml(request.email || request.reply_to || '')}
                 </a>
             </div>
         </div>
@@ -318,7 +343,7 @@ function viewRequest(requestId) {
                 <i class="fas fa-file-alt"></i>
                 Project Description
             </div>
-            <div class="detail-value description">${escapeHtml(request.description)}</div>
+            <div class="detail-value description">${escapeHtml(request.description || '')}</div>
         </div>
 
         <div class="request-detail">
@@ -332,35 +357,74 @@ function viewRequest(requestId) {
         </div>
     `;
 
-    statusSelect.value = request.status;
+    statusSelect.value = request.status || 'pending';
     requestModal.classList.add('show');
 }
 
-async function updateRequestStatus(requestId, newStatus) {
+async function updateRequestStatus(docId, newStatus, optionalMessage = "") {
     try {
-        await firebase.firestore()
-            .collection('coding-requests')
-            .doc(requestId)
-            .update({
-                status: newStatus,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
+        const db = firebase.firestore();
 
-        // Update local data
-        const request = allRequests.find(req => req.id === requestId);
-        if (request) {
-            request.status = newStatus;
+        // Update Firestore doc
+        await db.collection("coding-requests").doc(docId).update({
+            status: newStatus,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Update local cache so UI feels instant
+        const local = allRequests.find(r => r.id === docId);
+        if (local) local.status = newStatus;
+
+        showToast("Status updated!", "success");
+
+        // Fetch latest doc to email the right person
+        const snap = await db.collection("coding-requests").doc(docId).get();
+        const req = snap.data() || {};
+
+        // Prepare email (only if EmailJS is available and we have a recipient)
+        const recipient = (req.email || req.reply_to || "").trim();
+        if (typeof emailjs !== 'undefined' &&
+            ADMIN_EMAILJS_CONFIG.serviceId &&
+            ADMIN_EMAILJS_CONFIG.statusTemplateId &&
+            ADMIN_EMAILJS_CONFIG.publicKey &&
+            recipient) {
+
+            const templateParams = {
+                // Match your EmailJS template fields
+                to_name: req.name || "there",
+                reply_to: recipient,                 // Your template's "To Email" uses {{reply_to}}
+                request_id: req.request_id || docId, // show either custom request code or Firestore ID
+                new_status: formatStatus(newStatus),
+                admin_message: optionalMessage || '',
+                project_type: formatProjectType(req.projectType || ''),
+                language: formatLanguage(req.language || ''),
+                budget: req.budget ? formatBudget(req.budget) : 'Not specified',
+                current_date: new Date().toLocaleDateString()
+            };
+
+            try {
+                await emailjs.send(
+                    ADMIN_EMAILJS_CONFIG.serviceId,
+                    ADMIN_EMAILJS_CONFIG.statusTemplateId,
+                    templateParams,
+                    { publicKey: ADMIN_EMAILJS_CONFIG.publicKey }
+                );
+                console.log('Status update email sent:', templateParams);
+            } catch (emailErr) {
+                console.error('Failed to send status email:', emailErr);
+                // Don't block the UI if email fails
+            }
+        } else {
+            if (!recipient) console.warn('No recipient email on request; skipping status email.');
         }
 
-        updateStatistics();
+        // Refresh visible table & close modal
         applyFilters();
-
-        showToast(`Request status updated to ${formatStatus(newStatus)}`, "success");
         closeRequestModal();
 
     } catch (error) {
-        console.error('Error updating request status:', error);
-        showToast("Error updating request status. Please try again.", "error");
+        console.error("Error updating request status:", error);
+        showToast("Failed to update status", "error");
     }
 }
 
@@ -409,13 +473,13 @@ function exportToCSV() {
         headers.join(','),
         ...filteredRequests.map(request => [
             formatDate(request.timestamp),
-            `"${request.name.replace(/"/g, '""')}"`,
-            request.email,
-            formatLanguage(request.language),
-            formatProjectType(request.projectType),
+            `"${(request.name || '').replace(/"/g, '""')}"`,
+            (request.email || request.reply_to || ''),
+            formatLanguage(request.language || ''),
+            formatProjectType(request.projectType || ''),
             request.budget ? formatBudget(request.budget) : 'Not specified',
-            formatStatus(request.status),
-            `"${request.description.replace(/"/g, '""')}"`
+            formatStatus(request.status || 'pending'),
+            `"${(request.description || '').replace(/"/g, '""')}"`
         ].join(','))
     ].join('\n');
 
@@ -450,7 +514,7 @@ function formatLanguage(language) {
         'cpp': 'C++',
         'both': 'C# & C++'
     };
-    return languages[language] || language;
+    return languages[language] || (language || '');
 }
 
 function formatProjectType(type) {
@@ -464,7 +528,7 @@ function formatProjectType(type) {
         'optimization': 'Code Optimization',
         'other': 'Other'
     };
-    return types[type] || type;
+    return types[type] || (type || '');
 }
 
 function formatBudget(budget) {
@@ -476,7 +540,7 @@ function formatBudget(budget) {
         '5000-plus': '$5,000+',
         'discuss': "Let's discuss"
     };
-    return budgets[budget] || budget;
+    return budgets[budget] || (budget || '');
 }
 
 function formatStatus(status) {
@@ -485,20 +549,22 @@ function formatStatus(status) {
         'in-progress': 'In Progress',
         'completed': 'Completed'
     };
-    return statuses[status] || status;
+    return statuses[status] || (status || '');
 }
 
 function escapeHtml(text) {
     const div = document.createElement('div');
-    div.textContent = text;
+    div.textContent = text || '';
     return div.innerHTML;
 }
 
+// FIXED: no recursion — call the portal toast if available; otherwise fallback
 function showToast(message, type = "success") {
-    if (window.showToast) {
-        window.showToast(message, type);
+    if (window.CodingRequestPortal && typeof window.CodingRequestPortal.showToast === 'function') {
+        window.CodingRequestPortal.showToast(message, type);
+    } else if (window._showToast && typeof window._showToast === 'function') {
+        window._showToast(message, type);
     } else {
-        // Fallback alert
         alert(message);
     }
 }
@@ -562,11 +628,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Update status button
+    // Update status button (supports optional message textarea with id="statusNote")
     if (updateStatusBtn) {
         updateStatusBtn.addEventListener('click', function() {
             if (selectedRequestId && statusSelect.value) {
-                updateRequestStatus(selectedRequestId, statusSelect.value);
+                const noteInput = document.getElementById('statusNote');
+                const note = noteInput ? noteInput.value.trim() : '';
+                updateRequestStatus(selectedRequestId, statusSelect.value, note);
             }
         });
     }
@@ -593,7 +661,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (nextPageBtn) {
         nextPageBtn.addEventListener('click', function() {
-            const totalPages = Math.ceil(filteredRequests.length / requestsPerPage);
+            const totalPages = Math.ceil(filteredRequests.length / requestsPerPage) || 1;
             if (currentPage < totalPages) {
                 currentPage++;
                 updateTable();
