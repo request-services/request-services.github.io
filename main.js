@@ -35,14 +35,8 @@ try {
 
 // Initialize EmailJS if config is provided
 try {
-    if (EMAILJS_CONFIG.publicKey !== 'HdQVpdT33jKEojhyW') {
-        emailjs.init({
-            publicKey: EMAILJS_CONFIG.publicKey
-        });
-        console.log('EmailJS initialized successfully');
-    } else {
-        console.warn('EmailJS not configured - email functionality disabled');
-    }
+    emailjs.init(EMAILJS_CONFIG.publicKey);
+    console.log('EmailJS initialized successfully');
 } catch (error) {
     console.error('EmailJS initialization failed:', error);
 }
@@ -153,13 +147,12 @@ async function saveRequestToFirebase(requestData) {
 }
 
 // EmailJS Functions
+// EmailJS Functions
 async function sendAutoReplyEmail(requestData) {
     try {
-        // EmailJS template parameters - these names should match your EmailJS template variables
         const templateParams = {
             to_name: requestData.name,
-            reply_to: requestData.email,  // EmailJS often expects 'reply_to' for recipient
-            user_email: requestData.email, // Alternative field name
+            reply_to: requestData.email,  // <-- user's email goes here
             language: requestData.language === 'csharp' ? 'C#' :
                      requestData.language === 'cpp' ? 'C++' :
                      requestData.language === 'both' ? 'C# & C++' : requestData.language,
@@ -176,10 +169,7 @@ async function sendAutoReplyEmail(requestData) {
         const response = await emailjs.send(
             EMAILJS_CONFIG.serviceId,
             EMAILJS_CONFIG.templateId,
-            templateParams,
-            {
-                publicKey: EMAILJS_CONFIG.publicKey
-            }
+            templateParams
         );
 
         console.log('Auto-reply email sent successfully:', response);
@@ -190,6 +180,7 @@ async function sendAutoReplyEmail(requestData) {
         throw error;
     }
 }
+
 
 // Form Submission Handler
 async function handleFormSubmission(event) {
