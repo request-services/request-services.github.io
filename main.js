@@ -22,7 +22,11 @@ const EMAILJS_CONFIG = {
 };
 
 // Initialize EmailJS
-emailjs.init(EMAILJS_CONFIG.publicKey);
+(function(){
+    emailjs.init({
+        publicKey: EMAILJS_CONFIG.publicKey
+    });
+})();
 
 // DOM Elements
 const requestForm = document.getElementById('requestForm');
@@ -148,7 +152,10 @@ async function sendAutoReplyEmail(requestData) {
         const response = await emailjs.send(
             EMAILJS_CONFIG.serviceId,
             EMAILJS_CONFIG.templateId,
-            templateParams
+            templateParams,
+            {
+                publicKey: EMAILJS_CONFIG.publicKey
+            }
         );
 
         console.log('Auto-reply email sent:', response);
