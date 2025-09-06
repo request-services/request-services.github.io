@@ -1,12 +1,12 @@
 // Firebase Configuration
 const firebaseConfig = {
     // Replace with your Firebase config
-    apiKey: "your-api-key-here",
-    authDomain: "your-project.firebaseapp.com",
-    projectId: "your-project-id",
-    storageBucket: "your-project.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "your-app-id"
+    apiKey: "AIzaSyDaKqeEVPALHErdrY8HtrOrU9cv4R0OLwg",
+    authDomain: "fwewfwe-4b04c.firebaseapp.com",
+    projectId: "fwewfwe-4b04c",
+    storageBucket: "fwewfwe-4b04c.firebasestorage.app",
+    messagingSenderId: "219753969044",
+    appId: "1:219753969044:web:4f14a77dfd50088e2c4b81"
 };
 
 // Initialize Firebase
@@ -16,9 +16,9 @@ const auth = firebase.auth();
 
 // EmailJS Configuration
 const EMAILJS_CONFIG = {
-    serviceId: 'your-service-id', // Replace with your EmailJS service ID
-    templateId: 'your-template-id', // Replace with your EmailJS template ID
-    publicKey: 'your-public-key' // Replace with your EmailJS public key
+    serviceId: 'service_64bmwtd', // Replace with your EmailJS service ID
+    templateId: 'template_iunzxdz', // Replace with your EmailJS template ID
+    publicKey: 'HdQVpdT33jKEojhyW' // Replace with your EmailJS public key
 };
 
 // Initialize EmailJS
