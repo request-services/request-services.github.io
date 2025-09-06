@@ -441,13 +441,36 @@ async function updateRequestStatus(docId, newStatus, optionalMessage = "") {
 
 async function deleteRequest(requestId) {
     try {
-        await firebase.firestore()
-            .collection('coding-requests')
-            .doc(requestId)
-            .delete();
+        const db = firebase.firestore();
 
-        // Remove from local data
-        allRequests = allRequests.filter(req => req.id !== requestId);
+        // First: search for the doc by custom request_id OR Firestore docId
+        let docRef = db.collection('coding-requests').doc(requestId);
+        let snap = await docRef.get();
+
+        if (!snap.exists) {
+            // If not found directly, try to query by stored request_id field
+            const querySnap = await db.collection('coding-requests')
+                .where('request_id', '==', requestId)
+                .limit(1)
+                .get();
+
+            if (!querySnap.empty) {
+                docRef = querySnap.docs[0].ref;
+                snap = querySnap.docs[0];
+            } else {
+                console.error("❌ No request found with ID:", requestId);
+                showToast("Request not found", "error");
+                return;
+            }
+        }
+
+        // Delete the document
+        await docRef.delete();
+
+        // Remove from local cache
+        allRequests = allRequests.filter(req =>
+            req.id !== snap.id && req.request_id !== requestId
+        );
 
         updateStatistics();
         applyFilters();
@@ -460,6 +483,7 @@ async function deleteRequest(requestId) {
         showToast("Error deleting request. Please try again.", "error");
     }
 }
+
 
 function confirmDeleteRequest(requestId) {
     if (confirm('Are you sure you want to delete this request? This action cannot be undone.')) {
