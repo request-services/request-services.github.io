@@ -361,40 +361,46 @@ function viewRequest(requestId) {
     requestModal.classList.add('show');
 }
 
-async function updateRequestStatus(docId, newStatus, optionalMessage = "") {
+async function updateRequestStatus(requestId, newStatus, optionalMessage = "") {
     try {
         const db = firebase.firestore();
+        let docRef = db.collection("coding-requests").doc(requestId);
+        let snap = await docRef.get();
 
-        // Update Firestore doc (use Firestore doc ID)
-        await db.collection("coding-requests").doc(docId).update({
+        if (!snap.exists) {
+            // Not a Firestore docId → try query by request_id
+            const querySnap = await db.collection("coding-requests")
+                .where("request_id", "==", requestId)
+                .limit(1)
+                .get();
+
+            if (!querySnap.empty) {
+                docRef = querySnap.docs[0].ref;
+                snap = querySnap.docs[0];
+            } else {
+                console.error("❌ No request found with ID:", requestId);
+                showToast("Request not found", "error");
+                return;
+            }
+        }
+
+        // ✅ Update Firestore
+        await docRef.update({
             status: newStatus,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // Update local cache so UI feels instant
-        const local = allRequests.find(r => r.id === docId);
+        // ✅ Update local cache
+        const local = allRequests.find(r => r.id === snap.id || r.request_id === requestId);
         if (local) local.status = newStatus;
 
         showToast("Status updated!", "success");
 
-        // Always fetch the latest doc snapshot
-        const snap = await db.collection("coding-requests").doc(docId).get();
-        if (!snap.exists) {
-            console.error("No such request document:", docId);
-            return;
-        }
-
+        // ✅ Send email (same as before, using snap.data())
         const req = snap.data() || {};
-
-        // Correct request identifier:
-        // Prefer stored request_id, fallback to Firestore docId
-        const requestIdentifier = req.request_id || docId;
-
-        // Prepare recipient
         const recipient = (req.email || req.reply_to || "").trim();
 
-        // Prepare & send email if possible
-        if (typeof emailjs !== 'undefined' &&
+        if (typeof emailjs !== "undefined" &&
             ADMIN_EMAILJS_CONFIG.serviceId &&
             ADMIN_EMAILJS_CONFIG.statusTemplateId &&
             ADMIN_EMAILJS_CONFIG.publicKey &&
@@ -402,13 +408,13 @@ async function updateRequestStatus(docId, newStatus, optionalMessage = "") {
 
             const templateParams = {
                 to_name: req.name || "there",
-                reply_to: recipient,             // recipient email
-                request_id: requestIdentifier,   // always correct ID
+                reply_to: recipient,
+                request_id: req.request_id || snap.id,
                 new_status: formatStatus(newStatus),
-                admin_message: optionalMessage || '',
-                project_type: formatProjectType(req.projectType || ''),
-                language: formatLanguage(req.language || ''),
-                budget: req.budget ? formatBudget(req.budget) : 'Not specified',
+                admin_message: optionalMessage || "",
+                project_type: formatProjectType(req.projectType || ""),
+                language: formatLanguage(req.language || ""),
+                budget: req.budget ? formatBudget(req.budget) : "Not specified",
                 current_date: new Date().toLocaleDateString()
             };
 
@@ -419,17 +425,12 @@ async function updateRequestStatus(docId, newStatus, optionalMessage = "") {
                     templateParams,
                     { publicKey: ADMIN_EMAILJS_CONFIG.publicKey }
                 );
-                console.log('✅ Status update email sent:', templateParams);
+                console.log("✅ Status update email sent:", templateParams);
             } catch (emailErr) {
-                console.error('❌ Failed to send status email:', emailErr);
-            }
-        } else {
-            if (!recipient) {
-                console.warn('⚠️ No recipient email on request; skipping status email.');
+                console.error("⚠️ Failed to send status email:", emailErr);
             }
         }
 
-        // Refresh visible table & close modal
         applyFilters();
         closeRequestModal();
 
@@ -438,7 +439,6 @@ async function updateRequestStatus(docId, newStatus, optionalMessage = "") {
         showToast("Failed to update status", "error");
     }
 }
-
 async function deleteRequest(requestId) {
     try {
         const db = firebase.firestore();
