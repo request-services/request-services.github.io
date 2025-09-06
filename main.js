@@ -10,9 +10,6 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth();
 
 // EmailJS Configuration
 const EMAILJS_CONFIG = {
@@ -21,12 +18,34 @@ const EMAILJS_CONFIG = {
     publicKey: 'HdQVpdT33jKEojhyW' // Replace with your EmailJS public key
 };
 
-// Initialize EmailJS
-(function(){
-    emailjs.init({
-        publicKey: EMAILJS_CONFIG.publicKey
-    });
-})();
+// Initialize Firebase if config is provided
+let db, auth;
+try {
+    if (firebaseConfig.apiKey !== "AIzaSyDaKqeEVPALHErdrY8HtrOrU9cv4R0OLwg") {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        auth = firebase.auth();
+        console.log('Firebase initialized successfully');
+    } else {
+        console.warn('Firebase not configured - using demo mode');
+    }
+} catch (error) {
+    console.error('Firebase initialization failed:', error);
+}
+
+// Initialize EmailJS if config is provided
+try {
+    if (EMAILJS_CONFIG.publicKey !== 'HdQVpdT33jKEojhyW') {
+        emailjs.init({
+            publicKey: EMAILJS_CONFIG.publicKey
+        });
+        console.log('EmailJS initialized successfully');
+    } else {
+        console.warn('EmailJS not configured - email functionality disabled');
+    }
+} catch (error) {
+    console.error('EmailJS initialization failed:', error);
+}
 
 // DOM Elements
 const requestForm = document.getElementById('requestForm');
@@ -136,9 +155,11 @@ async function saveRequestToFirebase(requestData) {
 // EmailJS Functions
 async function sendAutoReplyEmail(requestData) {
     try {
+        // EmailJS template parameters - these names should match your EmailJS template variables
         const templateParams = {
             to_name: requestData.name,
-            to_email: requestData.email,
+            reply_to: requestData.email,  // EmailJS often expects 'reply_to' for recipient
+            user_email: requestData.email, // Alternative field name
             language: requestData.language === 'csharp' ? 'C#' :
                      requestData.language === 'cpp' ? 'C++' :
                      requestData.language === 'both' ? 'C# & C++' : requestData.language,
@@ -146,8 +167,11 @@ async function sendAutoReplyEmail(requestData) {
             description: requestData.description,
             budget: requestData.budget || 'Not specified',
             request_id: `REQ-${Date.now()}`,
-            current_date: new Date().toLocaleDateString()
+            current_date: new Date().toLocaleDateString(),
+            from_name: 'CodeRequest Portal'
         };
+
+        console.log('Sending email with params:', templateParams);
 
         const response = await emailjs.send(
             EMAILJS_CONFIG.serviceId,
@@ -158,10 +182,11 @@ async function sendAutoReplyEmail(requestData) {
             }
         );
 
-        console.log('Auto-reply email sent:', response);
+        console.log('Auto-reply email sent successfully:', response);
         return response;
     } catch (error) {
         console.error('Error sending auto-reply email:', error);
+        console.error('Error details:', error.text || error.message);
         throw error;
     }
 }
@@ -192,14 +217,18 @@ async function handleFormSubmission(event) {
     setLoadingState(true);
 
     try {
-        // Save to Firebase
+        // Save to Firebase first
         const requestId = await saveRequestToFirebase(requestData);
+        console.log('Request saved to Firebase with ID:', requestId);
 
-        // Send auto-reply email
-        await sendAutoReplyEmail(requestData);
-
-        // Show success message
-        showToast("We've received your coding request and sent you a confirmation email!", "success");
+        // Try to send auto-reply email (don't fail the whole process if this fails)
+        try {
+            await sendAutoReplyEmail(requestData);
+            showToast("We've received your coding request and sent you a confirmation email!", "success");
+        } catch (emailError) {
+            console.error('Email sending failed, but request was saved:', emailError);
+            showToast("Your request has been submitted successfully! (Note: Confirmation email may be delayed)", "success");
+        }
 
         // Reset form
         requestForm.reset();
