@@ -19,20 +19,16 @@ const EMAILJS_CONFIG = {
 };
 
 // Initialize Firebase if config is provided
+// Initialize Firebase
 let db, auth;
 try {
-    if (firebaseConfig.apiKey !== "AIzaSyDaKqeEVPALHErdrY8HtrOrU9cv4R0OLwg") {
-        firebase.initializeApp(firebaseConfig);
-        db = firebase.firestore();
-        auth = firebase.auth();
-        console.log('Firebase initialized successfully');
-    } else {
-        console.warn('Firebase not configured - using demo mode');
-    }
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    auth = firebase.auth();
+    console.log('Firebase initialized successfully');
 } catch (error) {
     console.error('Firebase initialization failed:', error);
 }
-
 // Initialize EmailJS if config is provided
 try {
     emailjs.init(EMAILJS_CONFIG.publicKey);
