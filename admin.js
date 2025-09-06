@@ -365,7 +365,7 @@ async function updateRequestStatus(docId, newStatus, optionalMessage = "") {
     try {
         const db = firebase.firestore();
 
-        // Update Firestore doc
+        // Update Firestore doc (use Firestore doc ID)
         await db.collection("coding-requests").doc(docId).update({
             status: newStatus,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -377,12 +377,23 @@ async function updateRequestStatus(docId, newStatus, optionalMessage = "") {
 
         showToast("Status updated!", "success");
 
-        // Fetch latest doc to email the right person
+        // Always fetch the latest doc snapshot
         const snap = await db.collection("coding-requests").doc(docId).get();
+        if (!snap.exists) {
+            console.error("No such request document:", docId);
+            return;
+        }
+
         const req = snap.data() || {};
 
-        // Prepare email (only if EmailJS is available and we have a recipient)
+        // Correct request identifier:
+        // Prefer stored request_id, fallback to Firestore docId
+        const requestIdentifier = req.request_id || docId;
+
+        // Prepare recipient
         const recipient = (req.email || req.reply_to || "").trim();
+
+        // Prepare & send email if possible
         if (typeof emailjs !== 'undefined' &&
             ADMIN_EMAILJS_CONFIG.serviceId &&
             ADMIN_EMAILJS_CONFIG.statusTemplateId &&
@@ -390,10 +401,9 @@ async function updateRequestStatus(docId, newStatus, optionalMessage = "") {
             recipient) {
 
             const templateParams = {
-                // Match your EmailJS template fields
                 to_name: req.name || "there",
-                reply_to: recipient,                 // Your template's "To Email" uses {{reply_to}}
-                request_id: req.request_id || docId, // show either custom request code or Firestore ID
+                reply_to: recipient,             // recipient email
+                request_id: requestIdentifier,   // always correct ID
                 new_status: formatStatus(newStatus),
                 admin_message: optionalMessage || '',
                 project_type: formatProjectType(req.projectType || ''),
@@ -409,13 +419,14 @@ async function updateRequestStatus(docId, newStatus, optionalMessage = "") {
                     templateParams,
                     { publicKey: ADMIN_EMAILJS_CONFIG.publicKey }
                 );
-                console.log('Status update email sent:', templateParams);
+                console.log('✅ Status update email sent:', templateParams);
             } catch (emailErr) {
-                console.error('Failed to send status email:', emailErr);
-                // Don't block the UI if email fails
+                console.error('❌ Failed to send status email:', emailErr);
             }
         } else {
-            if (!recipient) console.warn('No recipient email on request; skipping status email.');
+            if (!recipient) {
+                console.warn('⚠️ No recipient email on request; skipping status email.');
+            }
         }
 
         // Refresh visible table & close modal
