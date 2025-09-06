@@ -368,9 +368,9 @@ async function updateRequestStatus(requestId, newStatus, optionalMessage = "") {
         let snap = await docRef.get();
 
         if (!snap.exists) {
-            // Not a Firestore docId → try query by request_id
+            // requestId was actually the "id" field, not the Firestore doc.id
             const querySnap = await db.collection("coding-requests")
-                .where("request_id", "==", requestId)
+                .where("id", "==", requestId)
                 .limit(1)
                 .get();
 
@@ -391,25 +391,20 @@ async function updateRequestStatus(requestId, newStatus, optionalMessage = "") {
         });
 
         // ✅ Update local cache
-        const local = allRequests.find(r => r.id === snap.id || r.request_id === requestId);
+        const local = allRequests.find(r => r.id === snap.id || r.id === requestId);
         if (local) local.status = newStatus;
 
         showToast("Status updated!", "success");
 
-        // ✅ Send email (same as before, using snap.data())
+        // ✅ Send email
         const req = snap.data() || {};
         const recipient = (req.email || req.reply_to || "").trim();
 
-        if (typeof emailjs !== "undefined" &&
-            ADMIN_EMAILJS_CONFIG.serviceId &&
-            ADMIN_EMAILJS_CONFIG.statusTemplateId &&
-            ADMIN_EMAILJS_CONFIG.publicKey &&
-            recipient) {
-
+        if (recipient && typeof emailjs !== "undefined") {
             const templateParams = {
                 to_name: req.name || "there",
                 reply_to: recipient,
-                request_id: req.request_id || snap.id,
+                request_id: req.id || snap.id,
                 new_status: formatStatus(newStatus),
                 admin_message: optionalMessage || "",
                 project_type: formatProjectType(req.projectType || ""),
@@ -439,6 +434,7 @@ async function updateRequestStatus(requestId, newStatus, optionalMessage = "") {
         showToast("Failed to update status", "error");
     }
 }
+
 async function deleteRequest(requestId) {
     try {
         const db = firebase.firestore();
