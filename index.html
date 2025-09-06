@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Request Portal - Professional C# & C++ Development</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-code"></i>
+                <span>CodeRequest</span>
+            </div>
+            <div class="nav-links">
+                <a href="#home" class="nav-link">Home</a>
+                <a href="#services" class="nav-link">Services</a>
+                <a href="#contact" class="nav-link">Submit Request</a>
+                <a href="admin.html" class="nav-link admin-link">Admin</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title">
+                        Professional
+                        <span class="gradient-text">C# & C++</span>
+                        Development Services
+                    </h1>
+                    <p class="hero-description">
+                        Submit your coding requests and get high-quality, professional solutions delivered by experienced developers. From desktop applications to system programming - we've got you covered.
+                    </p>
+                    <div class="hero-buttons">
+                        <button class="btn btn-primary" onclick="scrollToSection('contact')">
+                            <i class="fas fa-paper-plane"></i>
+                            Submit Request
+                        </button>
+                        <button class="btn btn-secondary" onclick="scrollToSection('services')">
+                            <i class="fas fa-info-circle"></i>
+                            Learn More
+                        </button>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="code-window">
+                        <div class="window-header">
+                            <div class="window-controls">
+                                <span class="control red"></span>
+                                <span class="control yellow"></span>
+                                <span class="control green"></span>
+                            </div>
+                            <span class="window-title">main.cpp</span>
+                        </div>
+                        <div class="code-content">
+                            <div class="code-line"><span class="keyword">#include</span> <span class="string">&lt;iostream&gt;</span></div>
+                            <div class="code-line"><span class="keyword">using namespace</span> std;</div>
+                            <div class="code-line"></div>
+                            <div class="code-line"><span class="keyword">int</span> <span class="function">main</span>() {</div>
+                            <div class="code-line">    cout &lt;&lt; <span class="string">"Hello, World!"</span>;</div>
+                            <div class="code-line">    <span class="keyword">return</span> <span class="number">0</span>;</div>
+                            <div class="code-line">}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="hero-background">
+            <div class="floating-icon" style="--delay: 0s; --duration: 8s;">
+                <i class="fab fa-microsoft"></i>
+            </div>
+            <div class="floating-icon" style="--delay: 2s; --duration: 10s;">
+                <i class="fas fa-code-branch"></i>
+            </div>
+            <div class="floating-icon" style="--delay: 4s; --duration: 12s;">
+                <i class="fas fa-terminal"></i>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="services">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Our Development Services</h2>
+                <p class="section-description">
+                    Professional coding solutions tailored to your specific requirements
+                </p>
+            </div>
+            <div class="services-grid">
+                <div class="service-card" data-aos="fade-up" data-aos-delay="100">
+                    <div class="service-icon">
+                        <i class="fab fa-microsoft"></i>
+                    </div>
+                    <h3 class="service-title">C# Development</h3>
+                    <p class="service-description">
+                        Desktop applications, web APIs, Windows services, and enterprise solutions using .NET Framework and .NET Core.
+                    </p>
+                    <ul class="service-features">
+                        <li><i class="fas fa-check"></i> WPF & WinForms Applications</li>
+                        <li><i class="fas fa-check"></i> ASP.NET Web APIs</li>
+                        <li><i class="fas fa-check"></i> Console Applications</li>
+                        <li><i class="fas fa-check"></i> Database Integration</li>
+                    </ul>
+                </div>
+                <div class="service-card" data-aos="fade-up" data-aos-delay="200">
+                    <div class="service-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <h3 class="service-title">C++ Development</h3>
+                    <p class="service-description">
+                        High-performance applications, system programming, game development, and embedded solutions.
+                    </p>
+                    <ul class="service-features">
+                        <li><i class="fas fa-check"></i> System Programming</li>
+                        <li><i class="fas fa-check"></i> Game Development</li>
+                        <li><i class="fas fa-check"></i> Performance Optimization</li>
+                        <li><i class="fas fa-check"></i> Cross-platform Solutions</li>
+                    </ul>
+                </div>
+                <div class="service-card" data-aos="fade-up" data-aos-delay="300">
+                    <div class="service-icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <h3 class="service-title">Custom Solutions</h3>
+                    <p class="service-description">
+                        Tailored development services for unique requirements and specialized applications.
+                    </p>
+                    <ul class="service-features">
+                        <li><i class="fas fa-check"></i> Algorithm Implementation</li>
+                        <li><i class="fas fa-check"></i> Code Optimization</li>
+                        <li><i class="fas fa-check"></i> Legacy Code Modernization</li>
+                        <li><i class="fas fa-check"></i> Technical Consulting</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact/Request Form Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Submit Your Coding Request</h2>
+                <p class="section-description">
+                    Tell us about your project requirements and we'll get back to you with a solution
+                </p>
+            </div>
+            <div class="contact-content">
+                <div class="contact-info">
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <h3>Quick Turnaround</h3>
+                        <p>Most requests are reviewed within 24 hours</p>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3>Professional Quality</h3>
+                        <p>Clean, documented, and maintainable code</p>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <i class="fas fa-support"></i>
+                        </div>
+                        <h3>Ongoing Support</h3>
+                        <p>Post-delivery support and modifications</p>
+                    </div>
+                </div>
+                <div class="request-form-container">
+                    <form id="requestForm" class="request-form">
+                        <div class="form-group">
+                            <label for="language" class="form-label">
+                                <i class="fas fa-code"></i>
+                                Programming Language
+                            </label>
+                            <select id="language" name="language" class="form-select" required>
+                                <option value="">Select a language</option>
+                                <option value="csharp">C# (.NET)</option>
+                                <option value="cpp">C++</option>
+                                <option value="both">Both C# & C++</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="projectType" class="form-label">
+                                <i class="fas fa-project-diagram"></i>
+                                Project Type
+                            </label>
+                            <select id="projectType" name="projectType" class="form-select" required>
+                                <option value="">Select project type</option>
+                                <option value="desktop">Desktop Application</option>
+                                <option value="console">Console Application</option>
+                                <option value="web">Web API/Service</option>
+                                <option value="game">Game Development</option>
+                                <option value="system">System Programming</option>
+                                <option value="algorithm">Algorithm Implementation</option>
+                                <option value="optimization">Code Optimization</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope"></i>
+                                Email Address
+                            </label>
+                            <input type="email" id="email" name="email" class="form-input" placeholder="your.email@example.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="name" class="form-label">
+                                <i class="fas fa-user"></i>
+                                Full Name
+                            </label>
+                            <input type="text" id="name" name="name" class="form-input" placeholder="John Doe" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description" class="form-label">
+                                <i class="fas fa-file-alt"></i>
+                                Project Description
+                            </label>
+                            <textarea id="description" name="description" class="form-textarea" rows="6"
+                                placeholder="Describe your project requirements in detail. Include:
+• What the application should do
+• Key features needed
+• Target platform (Windows, Linux, etc.)
+• Any specific requirements or constraints
+• Timeline expectations" required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="budget" class="form-label">
+                                <i class="fas fa-dollar-sign"></i>
+                                Estimated Budget Range
+                            </label>
+                            <select id="budget" name="budget" class="form-select">
+                                <option value="">Select budget range (optional)</option>
+                                <option value="under-500">Under $500</option>
+                                <option value="500-1000">$500 - $1,000</option>
+                                <option value="1000-2500">$1,000 - $2,500</option>
+                                <option value="2500-5000">$2,500 - $5,000</option>
+                                <option value="5000-plus">$5,000+</option>
+                                <option value="discuss">Let's discuss</option>
+                            </select>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary btn-submit" id="submitBtn">
+                                <i class="fas fa-paper-plane"></i>
+                                <span class="btn-text">Submit Request</span>
+                                <div class="loading-spinner" style="display: none;">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                </div>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <i class="fas fa-code"></i>
+                        <span>CodeRequest</span>
+                    </div>
+                    <p>Professional C# and C++ development services for businesses and individuals.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Services</h3>
+                    <ul>
+                        <li><a href="#services">C# Development</a></li>
+                        <li><a href="#services">C++ Development</a></li>
+                        <li><a href="#services">Custom Solutions</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="#contact">Submit Request</a></li>
+                        <li><a href="admin.html">Admin Panel</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 CodeRequest Portal. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <div class="toast-content">
+            <div class="toast-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="toast-message">
+                <h4>Request Submitted Successfully!</h4>
+                <p>We'll get back to you within 24 hours.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+    <!-- EmailJS SDK -->
+    <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+
+    <!-- Custom Scripts -->
+    <script src="src/main.ts" type="module"></script>
+</body>
+</html>
